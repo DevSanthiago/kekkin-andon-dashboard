@@ -1,0 +1,55 @@
+import {
+  Bar,
+  ComposedChart,
+  CartesianGrid,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
+import { Panel } from '../ui/Panel'
+import { ANDON_COLORS } from '../../constants/dashboard/dashboardConstants'
+import type { MonthlyPoint } from '../../types'
+
+interface MonthlyTrendChartProps {
+  data: MonthlyPoint[]
+}
+
+export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
+  return (
+    <Panel title="Tendência mensal" subtitle="Dias de ausência e taxa de absenteísmo por mês" className="xl:col-span-2">
+      <ResponsiveContainer width="100%" height={280}>
+        <ComposedChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+          <CartesianGrid stroke="#1e2430" strokeDasharray="3 3" vertical={false} />
+          <XAxis dataKey="month" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis yAxisId="days" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis
+            yAxisId="rate"
+            orientation="right"
+            tick={{ fill: '#64748b', fontSize: 11 }}
+            axisLine={false}
+            tickLine={false}
+            unit="%"
+          />
+          <Tooltip
+            contentStyle={{ backgroundColor: '#161a23', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, fontSize: 12 }}
+            labelStyle={{ color: '#e2e8f0' }}
+            formatter={(value, name) => (name === 'Taxa' ? [`${String(value)}%`, name] : [Number(value ?? 0), name])}
+          />
+          <Bar yAxisId="days" dataKey="total" name="Ausências" fill="#334155" radius={[6, 6, 0, 0]} maxBarSize={48} />
+          <Bar yAxisId="days" dataKey="unjustified" name="Sem justificativa" fill={ANDON_COLORS.critical} radius={[6, 6, 0, 0]} maxBarSize={48} />
+          <Line
+            yAxisId="rate"
+            type="monotone"
+            dataKey="rate"
+            name="Taxa"
+            stroke={ANDON_COLORS.warning}
+            strokeWidth={2.5}
+            dot={{ r: 4, fill: ANDON_COLORS.warning, strokeWidth: 0 }}
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </Panel>
+  )
+}

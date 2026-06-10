@@ -1,0 +1,19 @@
+# Node
+node_modules/
+dist/
+*.local
+
+# .NET
+bin/
+obj/
+*.user
+
+# Configuração com segredo (link da planilha)
+backend/KekkinAndon.API/appsettings.json
+backend/KekkinAndon.API/appsettings.Development.json
+
+# IDE / SO
+.vs/
+.idea/
+.DS_Store
+Thumbs.db
