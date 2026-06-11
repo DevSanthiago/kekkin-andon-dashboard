@@ -38,6 +38,11 @@ export interface DailyPoint {
   total: number
 }
 
+export interface EmployeeRef {
+  registration: string
+  name: string
+}
+
 export interface Meta {
   headcount: number
   workingDays: number
@@ -46,6 +51,7 @@ export interface Meta {
   generatedAt: string
   availableMonths: string[]
   availableShifts: string[]
+  employees: EmployeeRef[]
 }
 
 export interface Dashboard {
@@ -63,4 +69,5 @@ export interface Dashboard {
 export interface DashboardFilters {
   month: string | null
   shift: string | null
+  employee: string | null
 }

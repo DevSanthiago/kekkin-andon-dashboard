@@ -20,9 +20,10 @@ public class DashboardController : ControllerBase
         [FromQuery] string? month,
         [FromQuery] string? shift,
         [FromQuery] int? headcount,
+        [FromQuery] string? employee,
         CancellationToken cancellationToken)
     {
-        var dashboard = await _analytics.BuildDashboardAsync(month, shift, headcount, cancellationToken);
+        var dashboard = await _analytics.BuildDashboardAsync(month, shift, headcount, employee, cancellationToken);
         return Ok(dashboard);
     }
 }

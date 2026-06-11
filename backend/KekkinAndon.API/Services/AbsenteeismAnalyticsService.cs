@@ -21,7 +21,7 @@ public class AbsenteeismAnalyticsService : IAbsenteeismAnalyticsService
         _configuration = configuration;
     }
 
-    public async Task<DashboardDto> BuildDashboardAsync(string? month, string? shift, int? headcount, CancellationToken cancellationToken)
+    public async Task<DashboardDto> BuildDashboardAsync(string? month, string? shift, int? headcount, string? employee, CancellationToken cancellationToken)
     {
         var all = await GetCachedRecordsAsync(cancellationToken);
         var dated = all.Where(r => r.AbsenceDate.HasValue).ToList();
@@ -40,20 +40,42 @@ public class AbsenteeismAnalyticsService : IAbsenteeismAnalyticsService
             .OrderBy(s => s)
             .ToList();
 
-        var filtered = dated;
+        var employees = dated
+            .GroupBy(r => r.Registration)
+            .Select(g => new EmployeeDto(g.Key, g.OrderByDescending(r => r.AbsenceDate).First().Name))
+            .OrderBy(e => e.Name)
+            .ToList();
+
+        var employeeFilter = employee?.Trim();
+        var scoped = string.IsNullOrEmpty(employeeFilter)
+            ? dated
+            : dated.Where(r =>
+                r.Registration.Equals(employeeFilter, StringComparison.OrdinalIgnoreCase)
+                || r.Name.Contains(employeeFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        var filtered = scoped;
         if (!string.IsNullOrEmpty(month))
             filtered = filtered.Where(r => $"{r.AbsenceDate!.Value.Year}-{r.AbsenceDate!.Value.Month:00}" == month).ToList();
         if (!string.IsNullOrEmpty(shift))
             filtered = filtered.Where(r => r.Shift.Equals(shift, StringComparison.OrdinalIgnoreCase)).ToList();
 
-        var effectiveHeadcount = headcount is > 0 ? headcount.Value : _configuration.GetValue("Workforce:Headcount", 600);
-        var periodStart = filtered.Count > 0 ? filtered.Min(r => r.AbsenceDate!.Value) : DateOnly.FromDateTime(DateTime.Today);
-        var periodEnd = filtered.Count > 0 ? filtered.Max(r => r.AbsenceDate!.Value) : DateOnly.FromDateTime(DateTime.Today);
+        var effectiveHeadcount = !string.IsNullOrEmpty(employeeFilter)
+            ? Math.Max(scoped.Select(r => r.Registration).Distinct().Count(), 1)
+            : headcount is > 0 ? headcount.Value : _configuration.GetValue("Workforce:Headcount", 600);
+
+        var periodScope = dated;
+        if (!string.IsNullOrEmpty(month))
+            periodScope = periodScope.Where(r => $"{r.AbsenceDate!.Value.Year}-{r.AbsenceDate!.Value.Month:00}" == month).ToList();
+        if (!string.IsNullOrEmpty(shift))
+            periodScope = periodScope.Where(r => r.Shift.Equals(shift, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        var periodStart = periodScope.Count > 0 ? periodScope.Min(r => r.AbsenceDate!.Value) : DateOnly.FromDateTime(DateTime.Today);
+        var periodEnd = periodScope.Count > 0 ? periodScope.Max(r => r.AbsenceDate!.Value) : DateOnly.FromDateTime(DateTime.Today);
         var workingDays = CountWorkingDays(periodStart, periodEnd);
 
         return new DashboardDto(
             BuildKpis(filtered, effectiveHeadcount, workingDays),
-            BuildMonthlyTrend(dated, effectiveHeadcount),
+            BuildMonthlyTrend(scoped, effectiveHeadcount),
             BuildBreakdown(filtered, r => r.Type),
             BuildBreakdown(filtered, r => r.Shift),
             BuildBreakdown(filtered, r => r.Manager, 12),
@@ -67,7 +89,8 @@ public class AbsenteeismAnalyticsService : IAbsenteeismAnalyticsService
                 periodEnd.ToString("yyyy-MM-dd"),
                 DateTimeOffset.Now.ToString("O"),
                 availableMonths,
-                availableShifts));
+                availableShifts,
+                employees));
     }
 
     private async Task<IReadOnlyList<AbsenceRecord>> GetCachedRecordsAsync(CancellationToken cancellationToken)

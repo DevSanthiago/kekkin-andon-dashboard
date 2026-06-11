@@ -29,6 +29,8 @@ public record RepeatOffenderDto(string Registration, string Name, string Shift, 
 
 public record DailyPointDto(string Date, int Total);
 
+public record EmployeeDto(string Registration, string Name);
+
 public record MetaDto(
     int Headcount,
     int WorkingDays,
@@ -36,4 +38,5 @@ public record MetaDto(
     string PeriodEnd,
     string GeneratedAt,
     IReadOnlyList<string> AvailableMonths,
-    IReadOnlyList<string> AvailableShifts);
+    IReadOnlyList<string> AvailableShifts,
+    IReadOnlyList<EmployeeDto> Employees);

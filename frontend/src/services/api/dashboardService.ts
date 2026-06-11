@@ -9,6 +9,7 @@ export async function fetchDashboard(filters: DashboardFilters, headcount: numbe
   const params: Record<string, string> = {}
   if (filters.month) params.month = filters.month
   if (filters.shift) params.shift = filters.shift
+  if (filters.employee) params.employee = filters.employee
   if (headcount && headcount > 0) params.headcount = String(headcount)
   const { data } = await api.get<Dashboard>('/dashboard', { params })
   return data

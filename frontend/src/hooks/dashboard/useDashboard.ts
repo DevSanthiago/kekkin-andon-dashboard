@@ -13,6 +13,7 @@ interface UseDashboardResult {
   headcount: number | null
   setMonth: (month: string | null) => void
   setShift: (shift: string | null) => void
+  setEmployee: (employee: string | null) => void
   setHeadcount: (headcount: number | null) => void
   refresh: () => void
 }
@@ -28,7 +29,7 @@ export function useDashboard(): UseDashboardResult {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null)
-  const [filters, setFilters] = useState<DashboardFilters>({ month: null, shift: null })
+  const [filters, setFilters] = useState<DashboardFilters>({ month: null, shift: null, employee: null })
   const [headcount, setHeadcountState] = useState<number | null>(readStoredHeadcount)
   const filtersRef = useRef(filters)
   const headcountRef = useRef(headcount)
@@ -66,6 +67,10 @@ export function useDashboard(): UseDashboardResult {
     setFilters((prev) => ({ ...prev, shift }))
   }, [])
 
+  const setEmployee = useCallback((employee: string | null) => {
+    setFilters((prev) => ({ ...prev, employee }))
+  }, [])
+
   const setHeadcount = useCallback((value: number | null) => {
     if (value && value > 0) {
       localStorage.setItem(STORAGE_KEYS.HEADCOUNT, String(value))
@@ -81,5 +86,5 @@ export function useDashboard(): UseDashboardResult {
     void load()
   }, [load])
 
-  return { data, error, isLoading, lastUpdatedAt, filters, headcount, setMonth, setShift, setHeadcount, refresh }
+  return { data, error, isLoading, lastUpdatedAt, filters, headcount, setMonth, setShift, setEmployee, setHeadcount, refresh }
 }

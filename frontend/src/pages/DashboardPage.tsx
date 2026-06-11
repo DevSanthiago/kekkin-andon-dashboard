@@ -13,12 +13,23 @@ import { RecurrenceTable } from '../components/dashboard/RecurrenceTable'
 import { Footer } from '../components/layout/Footer'
 
 export function DashboardPage() {
-  const { data, error, isLoading, lastUpdatedAt, filters, setMonth, setShift, setHeadcount } = useDashboard()
+  const { data, error, isLoading, lastUpdatedAt, filters, setMonth, setShift, setEmployee, setHeadcount } = useDashboard()
+
+  const employees = data?.meta.employees ?? []
+  const selectedEmployee = filters.employee
+    ? employees.find((e) => e.registration === filters.employee) ?? null
+    : null
 
   return (
     <div className="min-h-screen bg-[var(--bg)] px-6 py-6 text-[var(--text-1)] transition-colors lg:px-10">
       <div className="mx-auto max-w-[1600px] space-y-5">
-        <DashboardHeader lastUpdatedAt={lastUpdatedAt} hasError={Boolean(error)} />
+        <DashboardHeader
+          lastUpdatedAt={lastUpdatedAt}
+          hasError={Boolean(error)}
+          employees={employees}
+          selectedEmployee={selectedEmployee}
+          onEmployeeSelect={setEmployee}
+        />
 
         {isLoading && !data && (
           <p className="py-24 text-center text-sm tracking-widest text-[var(--text-3)]">CARREGANDO DADOS DA PLANILHA…</p>
@@ -33,6 +44,7 @@ export function DashboardPage() {
             <FilterBar
               meta={data.meta}
               filters={filters}
+              employeeSelected={Boolean(filters.employee)}
               onMonthChange={setMonth}
               onShiftChange={setShift}
               onHeadcountChange={setHeadcount}
