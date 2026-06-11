@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion'
 import { pulseDot } from '../../animations/dashboardAnimations'
 import { formatClock } from '../../helpers/formatHelpers'
+import { useTheme } from '../../hooks/theme/useTheme'
 import { ThemeToggle } from '../ui/ThemeToggle'
-import logo from '../../assets/img/m-transparent.png'
+import logoLight from '../../assets/img/m-transparent.png'
+import logoBlue from '../../assets/img/m-blue-transparent.png'
 
 interface DashboardHeaderProps {
   lastUpdatedAt: string | null
@@ -10,10 +12,12 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ lastUpdatedAt, hasError }: DashboardHeaderProps) {
+  const { theme } = useTheme()
+
   return (
     <header className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex items-center gap-4">
-        <img src={logo} alt="Logo" className="h-12 w-auto select-none" />
+        <img src={theme === 'dark' ? logoLight : logoBlue} alt="Logo" className="h-12 w-auto select-none" />
         <div>
           <h1 className="text-xl font-semibold tracking-[0.22em] text-[var(--text-1)]">KEKKIN ANDON</h1>
           <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--text-3)]">Painel de absenteísmo da fábrica</p>
