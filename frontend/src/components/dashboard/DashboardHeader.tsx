@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { pulseDot } from '../../animations/dashboardAnimations'
 import { formatClock } from '../../helpers/formatHelpers'
-import logo from '../../assets/m-transparent.png'
+import logo from '../../assets/img/m-transparent.png'
 
 interface DashboardHeaderProps {
   lastUpdatedAt: string | null
