@@ -1,6 +1,6 @@
 # Kekkin Andon（欠勤行灯）
 
-> Dashboard de absenteísmo da fábrica em tempo quase-real, alimentado por uma planilha do Google Sheets. **v1.0.0**
+> Dashboard de absenteísmo da fábrica em tempo quase-real, alimentado por uma planilha do Google Sheets. **Versionamento automático por commits** (v1.0.x — o patch é a contagem de commits do repositório).
 
 **Kekkin** (欠勤) = ausência ao trabalho. **Andon** (行灯) = o painel luminoso do Sistema Toyota de Produção que torna o status da fábrica visível a todos. Este projeto é literalmente um *andon* de absenteísmo: KPIs, percentuais e gráficos das ausências dos colaboradores, atualizados automaticamente a partir da planilha de controle do RH/gestão.
 
@@ -99,6 +99,16 @@ animations/                        → variants do Framer Motion isolados
 ```
 
 Convenções: TypeScript estrito sem `any`, sem comentários no código, pastas por domínio.
+
+### Versionamento automático por commits
+
+A versão exibida no footer **não é mantida manualmente** — é derivada do git a cada build/dev:
+
+```
+versão = {major}.{minor} (package.json) + {patch} = git rev-list --count HEAD
+```
+
+Implementação: o `vite.config.ts` resolve a versão e a injeta como a constante global `__APP_VERSION__` (via `define`), declarada em `src/vite-env.d.ts` e consumida pelo `Footer`. Sem git disponível (ex.: build a partir de um zip), cai no `version` do `package.json`. Cada commit incrementa o patch automaticamente; bumps de `major.minor` são feitos no `package.json`. Em dev, o número atualiza no próximo restart do `npm run dev`; no build de produção sai sempre exato.
 
 ## Limitações conhecidas (v1)
 
