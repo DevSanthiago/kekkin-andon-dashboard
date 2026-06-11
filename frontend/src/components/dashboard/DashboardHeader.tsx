@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { pulseDot } from '../../animations/dashboardAnimations'
 import { formatClock } from '../../helpers/formatHelpers'
+import logo from '../../assets/m-transparent.png'
 
 interface DashboardHeaderProps {
   lastUpdatedAt: string | null
@@ -11,7 +12,7 @@ export function DashboardHeader({ lastUpdatedAt, hasError }: DashboardHeaderProp
   return (
     <header className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex items-center gap-4">
-        <span className="select-none text-3xl font-light tracking-wide text-rose-600">欠勤</span>
+        <img src={logo} alt="Logo" className="h-12 w-auto select-none" />
         <div>
           <h1 className="text-xl font-semibold tracking-[0.22em] text-slate-100">KEKKIN ANDON</h1>
           <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Painel de absenteísmo da fábrica</p>
