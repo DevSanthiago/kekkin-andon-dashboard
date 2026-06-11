@@ -1,5 +1,7 @@
 export const POLLING_INTERVAL_MS = 60_000
 
+export const SPLASH_DURATION_MS = 6_000
+
 export const ANDON_COLORS = {
   ok: '#34d399',
   warning: '#fbbf24',

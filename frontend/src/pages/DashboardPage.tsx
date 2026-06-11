@@ -1,6 +1,9 @@
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useDashboard } from '../hooks/dashboard/useDashboard'
+import { useLoadingSplash } from '../hooks/dashboard/useLoadingSplash'
 import { containerStagger } from '../animations/dashboardAnimations'
+import { SPLASH_DURATION_MS } from '../constants/dashboard/dashboardConstants'
+import { LoadingSplash } from '../components/dashboard/LoadingSplash'
 import { DashboardHeader } from '../components/dashboard/DashboardHeader'
 import { FilterBar } from '../components/dashboard/FilterBar'
 import { KpiGrid } from '../components/dashboard/KpiGrid'
@@ -13,7 +16,8 @@ import { RecurrenceTable } from '../components/dashboard/RecurrenceTable'
 import { Footer } from '../components/layout/Footer'
 
 export function DashboardPage() {
-  const { data, error, isLoading, lastUpdatedAt, filters, setMonth, setShift, setEmployee, setHeadcount } = useDashboard()
+  const { data, error, lastUpdatedAt, filters, setMonth, setShift, setEmployee, setHeadcount } = useDashboard()
+  const showSplash = useLoadingSplash(!data && !error, SPLASH_DURATION_MS)
 
   const employees = data?.meta.employees ?? []
   const selectedEmployee = filters.employee
@@ -31,11 +35,9 @@ export function DashboardPage() {
           onEmployeeSelect={setEmployee}
         />
 
-        {isLoading && !data && (
-          <p className="py-24 text-center text-sm tracking-widest text-[var(--text-3)]">CARREGANDO DADOS DA PLANILHA…</p>
-        )}
+        <AnimatePresence>{showSplash && <LoadingSplash />}</AnimatePresence>
 
-        {error && !data && (
+        {!showSplash && error && !data && (
           <p className="py-24 text-center text-sm tracking-widest text-rose-400">{error}</p>
         )}
 
