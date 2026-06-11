@@ -19,9 +19,10 @@ public class DashboardController : ControllerBase
     public async Task<ActionResult<DashboardDto>> Get(
         [FromQuery] string? month,
         [FromQuery] string? shift,
+        [FromQuery] int? headcount,
         CancellationToken cancellationToken)
     {
-        var dashboard = await _analytics.BuildDashboardAsync(month, shift, cancellationToken);
+        var dashboard = await _analytics.BuildDashboardAsync(month, shift, headcount, cancellationToken);
         return Ok(dashboard);
     }
 }

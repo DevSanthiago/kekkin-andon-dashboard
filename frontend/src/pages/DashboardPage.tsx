@@ -10,9 +10,10 @@ import { DailyAreaChart } from '../components/dashboard/DailyAreaChart'
 import { ManagerBarChart } from '../components/dashboard/ManagerBarChart'
 import { ShiftSplit } from '../components/dashboard/ShiftSplit'
 import { RecurrenceTable } from '../components/dashboard/RecurrenceTable'
+import { Footer } from '../components/layout/Footer'
 
 export function DashboardPage() {
-  const { data, error, isLoading, lastUpdatedAt, filters, setMonth, setShift } = useDashboard()
+  const { data, error, isLoading, lastUpdatedAt, filters, setMonth, setShift, setHeadcount } = useDashboard()
 
   return (
     <div className="min-h-screen bg-[#0a0b10] px-6 py-6 text-slate-200 lg:px-10">
@@ -29,7 +30,13 @@ export function DashboardPage() {
 
         {data && (
           <>
-            <FilterBar meta={data.meta} filters={filters} onMonthChange={setMonth} onShiftChange={setShift} />
+            <FilterBar
+              meta={data.meta}
+              filters={filters}
+              onMonthChange={setMonth}
+              onShiftChange={setShift}
+              onHeadcountChange={setHeadcount}
+            />
 
             <motion.div variants={containerStagger} initial="hidden" animate="visible" className="space-y-5">
               <KpiGrid kpis={data.kpis} />
@@ -51,6 +58,8 @@ export function DashboardPage() {
             </motion.div>
           </>
         )}
+
+        <Footer />
       </div>
     </div>
   )

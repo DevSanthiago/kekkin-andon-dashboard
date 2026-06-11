@@ -21,7 +21,7 @@ public class AbsenteeismAnalyticsService : IAbsenteeismAnalyticsService
         _configuration = configuration;
     }
 
-    public async Task<DashboardDto> BuildDashboardAsync(string? month, string? shift, CancellationToken cancellationToken)
+    public async Task<DashboardDto> BuildDashboardAsync(string? month, string? shift, int? headcount, CancellationToken cancellationToken)
     {
         var all = await GetCachedRecordsAsync(cancellationToken);
         var dated = all.Where(r => r.AbsenceDate.HasValue).ToList();
@@ -46,14 +46,14 @@ public class AbsenteeismAnalyticsService : IAbsenteeismAnalyticsService
         if (!string.IsNullOrEmpty(shift))
             filtered = filtered.Where(r => r.Shift.Equals(shift, StringComparison.OrdinalIgnoreCase)).ToList();
 
-        var headcount = _configuration.GetValue("Workforce:Headcount", 600);
+        var effectiveHeadcount = headcount is > 0 ? headcount.Value : _configuration.GetValue("Workforce:Headcount", 600);
         var periodStart = filtered.Count > 0 ? filtered.Min(r => r.AbsenceDate!.Value) : DateOnly.FromDateTime(DateTime.Today);
         var periodEnd = filtered.Count > 0 ? filtered.Max(r => r.AbsenceDate!.Value) : DateOnly.FromDateTime(DateTime.Today);
         var workingDays = CountWorkingDays(periodStart, periodEnd);
 
         return new DashboardDto(
-            BuildKpis(filtered, headcount, workingDays),
-            BuildMonthlyTrend(dated, headcount),
+            BuildKpis(filtered, effectiveHeadcount, workingDays),
+            BuildMonthlyTrend(dated, effectiveHeadcount),
             BuildBreakdown(filtered, r => r.Type),
             BuildBreakdown(filtered, r => r.Shift),
             BuildBreakdown(filtered, r => r.Manager, 12),
@@ -61,7 +61,7 @@ public class AbsenteeismAnalyticsService : IAbsenteeismAnalyticsService
             BuildTopRecurrences(filtered),
             BuildDailySeries(filtered),
             new MetaDto(
-                headcount,
+                effectiveHeadcount,
                 workingDays,
                 periodStart.ToString("yyyy-MM-dd"),
                 periodEnd.ToString("yyyy-MM-dd"),
