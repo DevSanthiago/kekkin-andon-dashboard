@@ -18,7 +18,7 @@ function KpiCard({ label, value, detail, accentColor, badge }: KpiCardProps) {
   return (
     <Panel>
       <div className="flex items-start justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{label}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-2)]">{label}</p>
         {badge && (
           <span
             className="rounded-full px-2 py-0.5 text-[10px] font-bold tracking-widest"
@@ -28,10 +28,10 @@ function KpiCard({ label, value, detail, accentColor, badge }: KpiCardProps) {
           </span>
         )}
       </div>
-      <p className="mt-3 text-4xl font-semibold tabular-nums" style={{ color: accentColor ?? '#e2e8f0' }}>
+      <p className="mt-3 text-4xl font-semibold tabular-nums" style={{ color: accentColor ?? 'var(--text-1)' }}>
         {value}
       </p>
-      <p className="mt-2 text-[11px] text-slate-500">{detail}</p>
+      <p className="mt-2 text-[11px] text-[var(--text-3)]">{detail}</p>
     </Panel>
   )
 }

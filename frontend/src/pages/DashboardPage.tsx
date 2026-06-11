@@ -16,12 +16,12 @@ export function DashboardPage() {
   const { data, error, isLoading, lastUpdatedAt, filters, setMonth, setShift, setHeadcount } = useDashboard()
 
   return (
-    <div className="min-h-screen bg-[#0a0b10] px-6 py-6 text-slate-200 lg:px-10">
+    <div className="min-h-screen bg-[var(--bg)] px-6 py-6 text-[var(--text-1)] transition-colors lg:px-10">
       <div className="mx-auto max-w-[1600px] space-y-5">
         <DashboardHeader lastUpdatedAt={lastUpdatedAt} hasError={Boolean(error)} />
 
         {isLoading && !data && (
-          <p className="py-24 text-center text-sm tracking-widest text-slate-500">CARREGANDO DADOS DA PLANILHA…</p>
+          <p className="py-24 text-center text-sm tracking-widest text-[var(--text-3)]">CARREGANDO DADOS DA PLANILHA…</p>
         )}
 
         {error && !data && (

@@ -37,7 +37,7 @@ export function FilterBar({ meta, filters, onMonthChange, onShiftChange, onHeadc
         options={meta.availableShifts.map((s) => ({ value: s, label: s }))}
         onChange={onShiftChange}
       />
-      <label className="flex items-center gap-2 text-[11px] font-medium text-slate-400">
+      <label className="flex items-center gap-2 text-[11px] font-medium text-[var(--text-2)]">
         Efetivo total
         <input
           key={meta.headcount}
@@ -46,10 +46,10 @@ export function FilterBar({ meta, filters, onMonthChange, onShiftChange, onHeadc
           defaultValue={meta.headcount}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className="h-9 w-24 rounded-lg border border-white/10 bg-[#161a23] px-3 text-xs font-medium text-slate-200 outline-none transition-colors hover:border-white/20 focus:border-rose-500/60 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          className="h-9 w-24 rounded-lg border border-[var(--panel-border)] bg-[var(--surface)] px-3 text-xs font-medium text-[var(--text-1)] outline-none transition-colors hover:border-rose-500/40 focus:border-rose-500/60 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         />
       </label>
-      <span className="ml-auto text-[11px] text-slate-500">
+      <span className="ml-auto text-[11px] text-[var(--text-3)]">
         Base do cálculo: {meta.headcount} colaboradores · {meta.workingDays} dias úteis no período
       </span>
     </div>
