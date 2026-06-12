@@ -24,6 +24,8 @@ frontend/ React 19 + TypeScript + Vite + Tailwind — porta 5173
 
 ## KPIs e visões
 
+> 📊 **Cada indicador — fórmula, leitura e limitações — está detalhado em [INDICADORES.md](INDICADORES.md).**
+
 | Visão | Conteúdo |
 |---|---|
 | KPIs | Taxa de absenteísmo (com selo saudável/atenção/crítico), dias de ausência, colaboradores distintos, sem justificativa, atestados, média de dias por colaborador |
@@ -31,16 +33,17 @@ frontend/ React 19 + TypeScript + Vite + Tailwind — porta 5173
 | Por tipo | Donut da distribuição (atestado, declaração de horas, sem justificativa…) |
 | Série diária | Área com as ausências dia a dia do período filtrado |
 | Por turno | Participação ADM × 2ºT |
+| Faltas injustificadas × medidas | Comparativo mensal com a **cobertura** de medidas disciplinares (advertência/suspensão/justa causa) sobre as faltas sem justificativa |
 | Por gestor | Ranking horizontal |
 | Reincidências | Top 10 colaboradores com mais dias de ausência |
 
-Filtros: **mês** e **turno** (server-side).
+Filtros: **mês**, **turno** e **colaborador** (visão individual via busca do header) — todos server-side.
 
 ### Taxa de absenteísmo — como é calculada
 
 `taxa = dias de ausência ÷ (efetivo × dias úteis do período) × 100`
 
-A planilha só registra **ausências** — o **efetivo total** (headcount) vem da configuração `Workforce:Headcount` do backend (default 600). **Ajuste para o número real da fábrica**; o valor usado aparece no rodapé dos filtros do dashboard.
+A planilha só registra **ausências** — o **efetivo total** (headcount) vem da configuração `Workforce:Headcount` do backend (default 600) ou do campo "Efetivo total" do próprio dashboard. **Ajuste para o número real da fábrica**; o valor usado aparece no rodapé dos filtros do dashboard.
 
 ## Como rodar
 
@@ -63,6 +66,7 @@ npm run dev
 "GoogleSheet": {
   "SpreadsheetId": "<id da planilha>",
   "Gid": "0",
+  "DisciplinaryGid": "<gid da aba de medidas>",
   "CacheSeconds": 60
 },
 "Workforce": { "Headcount": 600 }
@@ -70,20 +74,24 @@ npm run dev
 
 Modelo em `appsettings.example.json`. A planilha precisa estar compartilhada como **"qualquer pessoa com o link — leitor"** (o backend lê o CSV export sem credencial; o link é o segredo). Evolução futura: trocar por service account do Google para planilha 100% restrita — basta substituir o `GoogleSheetAbsenceClient`.
 
-### Planilha esperada (aba BD FALTAS)
+### Planilha esperada
 
-Colunas, na ordem: `DATA DE PREENCHIMENTO · Matrícula · NOME · DATA AUSENCIA · TIPO · JUSTIFICATIVA · TURNO · GESTOR SISTEMA · LINHAS HOJE · DEVOLUTIVA · OBS: · MÊS ABREVIADO`. Uma linha = um dia de ausência de um colaborador. Datas em `dd/MM/yyyy`.
+**Aba de ausências (`BD FALTAS`, `Gid`)** — colunas, na ordem: `DATA DE PREENCHIMENTO · Matrícula · NOME · DATA AUSENCIA · TIPO · JUSTIFICATIVA · TURNO · GESTOR SISTEMA · LINHAS HOJE · DEVOLUTIVA · OBS: · MÊS ABREVIADO`. Uma linha = um dia de ausência de um colaborador. Datas em `dd/MM/yyyy`.
+
+**Aba de medidas disciplinares (`RELATÓRIO SEMANAL - MEDIDAS`, `DisciplinaryGid`)** — colunas, na ordem: `DATA DA AUSÊNCIA · MATRI · NOME · TIPO · JUSTIFICATIVA · STATUS · OBS: · TURNO`. Uma linha = uma medida (advertência/suspensão/justa causa na coluna JUSTIFICATIVA); STATUS `CANCELADO` exclui a medida do cálculo de cobertura.
 
 ## Arquitetura
 
 **Backend — Clean Architecture enxuta** (`backend/KekkinAndon.API`):
 
 ```
-Controllers/  DashboardController            → GET /api/dashboard (month, shift)
-Services/     GoogleSheetAbsenceClient       → baixa e parseia o CSV da planilha
-              AbsenteeismAnalyticsService    → KPIs, tendências, rankings (cache 60s)
+Controllers/  DashboardController            → GET /api/dashboard (month, shift, headcount, employee)
+Services/     GoogleSheetAbsenceClient       → baixa e parseia o CSV da aba de ausências
+              GoogleSheetDisciplinaryClient  → baixa e parseia o CSV da aba de medidas
+              AbsenteeismAnalyticsService    → KPIs, tendências, rankings, cobertura (cache 60s)
               CsvLineParser                  → parser CSV com suporte a aspas
 Models/       AbsenceRecord                  → domínio (IsUnjustified, IsMedical)
+              DisciplinaryRecord             → domínio (IsApplied)
 Dtos/         DashboardDto e satélites       → contrato da API (camelCase)
 ```
 
@@ -113,5 +121,5 @@ Implementação: o `vite.config.ts` resolve a versão e a injeta como a constant
 ## Limitações conhecidas (v1)
 
 - Headcount é configuração manual, não vem da planilha.
-- Abas `RELATÓRIO SEMANAL - MEDIDAS` e `SPM HOJE` ainda não são consumidas.
+- Aba `SPM HOJE` ainda não é consumida.
 - Sem autenticação — pensado para rede interna/TV; não expor à internet sem proteção.
