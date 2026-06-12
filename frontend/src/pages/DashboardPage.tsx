@@ -10,6 +10,8 @@ import { KpiGrid } from '../components/dashboard/KpiGrid'
 import { MonthlyTrendChart } from '../components/dashboard/MonthlyTrendChart'
 import { TypeDonutChart } from '../components/dashboard/TypeDonutChart'
 import { DailyAreaChart } from '../components/dashboard/DailyAreaChart'
+import { DisciplinaryComparisonChart } from '../components/dashboard/DisciplinaryComparisonChart'
+import { MeasureBreakdown } from '../components/dashboard/MeasureBreakdown'
 import { ManagerBarChart } from '../components/dashboard/ManagerBarChart'
 import { ShiftSplit } from '../components/dashboard/ShiftSplit'
 import { RecurrenceTable } from '../components/dashboard/RecurrenceTable'
@@ -63,6 +65,11 @@ export function DashboardPage() {
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
                 <DailyAreaChart data={data.dailySeries} />
                 <ShiftSplit data={data.byShift} />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+                <DisciplinaryComparisonChart data={data.disciplinary.monthlyComparison} />
+                <MeasureBreakdown data={data.disciplinary} />
               </div>
 
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">

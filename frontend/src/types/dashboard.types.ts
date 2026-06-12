@@ -43,6 +43,24 @@ export interface EmployeeRef {
   name: string
 }
 
+export interface DisciplinaryMonthlyPoint {
+  month: string
+  year: number
+  monthNumber: number
+  unjustified: number
+  measures: number
+  coverage: number
+}
+
+export interface Disciplinary {
+  unjustifiedDays: number
+  measuresApplied: number
+  measuresCancelled: number
+  coverageRate: number
+  byMeasure: BreakdownItem[]
+  monthlyComparison: DisciplinaryMonthlyPoint[]
+}
+
 export interface Meta {
   headcount: number
   workingDays: number
@@ -63,6 +81,7 @@ export interface Dashboard {
   byJustification: BreakdownItem[]
   topRecurrences: RepeatOffender[]
   dailySeries: DailyPoint[]
+  disciplinary: Disciplinary
   meta: Meta
 }
 

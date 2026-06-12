@@ -30,6 +30,12 @@ export const TYPE_COLORS: Record<string, string> = {
 
 export const FALLBACK_TYPE_COLOR = '#475569'
 
+export const MEASURE_COLORS: Record<string, string> = {
+  ADVERTÊNCIA: '#fbbf24',
+  SUSPENSÃO: '#fb923c',
+  'JUSTA CAUSA': '#e11d48',
+}
+
 export const MONTH_LABELS: Record<string, string> = {
   '01': 'Janeiro',
   '02': 'Fevereiro',

@@ -8,15 +8,22 @@ namespace KekkinAndon.API.Services;
 public class AbsenteeismAnalyticsService : IAbsenteeismAnalyticsService
 {
     private const string CacheKey = "absence-records";
+    private const string DisciplinaryCacheKey = "disciplinary-records";
     private static readonly CultureInfo PtBr = new("pt-BR");
 
     private readonly IAbsenceSheetClient _sheetClient;
+    private readonly IDisciplinarySheetClient _disciplinaryClient;
     private readonly IMemoryCache _cache;
     private readonly IConfiguration _configuration;
 
-    public AbsenteeismAnalyticsService(IAbsenceSheetClient sheetClient, IMemoryCache cache, IConfiguration configuration)
+    public AbsenteeismAnalyticsService(
+        IAbsenceSheetClient sheetClient,
+        IDisciplinarySheetClient disciplinaryClient,
+        IMemoryCache cache,
+        IConfiguration configuration)
     {
         _sheetClient = sheetClient;
+        _disciplinaryClient = disciplinaryClient;
         _cache = cache;
         _configuration = configuration;
     }
@@ -24,7 +31,9 @@ public class AbsenteeismAnalyticsService : IAbsenteeismAnalyticsService
     public async Task<DashboardDto> BuildDashboardAsync(string? month, string? shift, int? headcount, string? employee, CancellationToken cancellationToken)
     {
         var all = await GetCachedRecordsAsync(cancellationToken);
+        var disciplinaryAll = await GetCachedDisciplinaryRecordsAsync(cancellationToken);
         var dated = all.Where(r => r.AbsenceDate.HasValue).ToList();
+        var disciplinaryDated = disciplinaryAll.Where(r => r.AbsenceDate.HasValue).ToList();
 
         var availableMonths = dated
             .Select(r => r.AbsenceDate!.Value)
@@ -59,6 +68,18 @@ public class AbsenteeismAnalyticsService : IAbsenteeismAnalyticsService
         if (!string.IsNullOrEmpty(shift))
             filtered = filtered.Where(r => r.Shift.Equals(shift, StringComparison.OrdinalIgnoreCase)).ToList();
 
+        var disciplinaryScoped = string.IsNullOrEmpty(employeeFilter)
+            ? disciplinaryDated
+            : disciplinaryDated.Where(r =>
+                r.Registration.Equals(employeeFilter, StringComparison.OrdinalIgnoreCase)
+                || r.Name.Contains(employeeFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        var disciplinaryFiltered = disciplinaryScoped;
+        if (!string.IsNullOrEmpty(month))
+            disciplinaryFiltered = disciplinaryFiltered.Where(r => $"{r.AbsenceDate!.Value.Year}-{r.AbsenceDate!.Value.Month:00}" == month).ToList();
+        if (!string.IsNullOrEmpty(shift))
+            disciplinaryFiltered = disciplinaryFiltered.Where(r => r.Shift.Equals(shift, StringComparison.OrdinalIgnoreCase)).ToList();
+
         var effectiveHeadcount = !string.IsNullOrEmpty(employeeFilter)
             ? Math.Max(scoped.Select(r => r.Registration).Distinct().Count(), 1)
             : headcount is > 0 ? headcount.Value : _configuration.GetValue("Workforce:Headcount", 600);
@@ -82,6 +103,7 @@ public class AbsenteeismAnalyticsService : IAbsenteeismAnalyticsService
             BuildBreakdown(filtered, r => r.Justification),
             BuildTopRecurrences(filtered),
             BuildDailySeries(filtered),
+            BuildDisciplinary(filtered, disciplinaryFiltered, scoped, disciplinaryScoped),
             new MetaDto(
                 effectiveHeadcount,
                 workingDays,
@@ -102,6 +124,70 @@ public class AbsenteeismAnalyticsService : IAbsenteeismAnalyticsService
         var ttl = _configuration.GetValue("GoogleSheet:CacheSeconds", 60);
         _cache.Set(CacheKey, records, TimeSpan.FromSeconds(ttl));
         return records;
+    }
+
+    private async Task<IReadOnlyList<DisciplinaryRecord>> GetCachedDisciplinaryRecordsAsync(CancellationToken cancellationToken)
+    {
+        if (_cache.TryGetValue(DisciplinaryCacheKey, out IReadOnlyList<DisciplinaryRecord>? cached) && cached is not null)
+            return cached;
+
+        var records = await _disciplinaryClient.GetRecordsAsync(cancellationToken);
+        var ttl = _configuration.GetValue("GoogleSheet:CacheSeconds", 60);
+        _cache.Set(DisciplinaryCacheKey, records, TimeSpan.FromSeconds(ttl));
+        return records;
+    }
+
+    private static DisciplinaryDto BuildDisciplinary(
+        IReadOnlyList<AbsenceRecord> absences,
+        IReadOnlyList<DisciplinaryRecord> measures,
+        IReadOnlyList<AbsenceRecord> absenceTrendScope,
+        IReadOnlyList<DisciplinaryRecord> measureTrendScope)
+    {
+        var unjustified = absences.Count(r => r.IsUnjustified);
+        var applied = measures.Count(r => r.IsApplied);
+        var cancelled = measures.Count - applied;
+
+        var appliedRecords = measures.Where(r => r.IsApplied).ToList();
+        var byMeasure = appliedRecords
+            .GroupBy(r => string.IsNullOrEmpty(r.Measure) ? "NÃO INFORMADO" : r.Measure)
+            .OrderByDescending(g => g.Count())
+            .Select(g => new BreakdownItemDto(g.Key, g.Count(), Round(Share(g.Count(), applied))))
+            .ToList();
+
+        var unjustifiedByMonth = absenceTrendScope
+            .Where(r => r.IsUnjustified)
+            .GroupBy(r => new { r.AbsenceDate!.Value.Year, r.AbsenceDate!.Value.Month })
+            .ToDictionary(g => (g.Key.Year, g.Key.Month), g => g.Count());
+
+        var measuresByMonth = measureTrendScope
+            .Where(r => r.IsApplied)
+            .GroupBy(r => new { r.AbsenceDate!.Value.Year, r.AbsenceDate!.Value.Month })
+            .ToDictionary(g => (g.Key.Year, g.Key.Month), g => g.Count());
+
+        var monthlyComparison = unjustifiedByMonth.Keys
+            .Union(measuresByMonth.Keys)
+            .OrderBy(k => k.Item1).ThenBy(k => k.Item2)
+            .Select(k =>
+            {
+                var monthUnjustified = unjustifiedByMonth.GetValueOrDefault(k);
+                var monthMeasures = measuresByMonth.GetValueOrDefault(k);
+                return new DisciplinaryMonthlyPointDto(
+                    PtBr.DateTimeFormat.GetAbbreviatedMonthName(k.Item2).ToUpperInvariant().TrimEnd('.'),
+                    k.Item1,
+                    k.Item2,
+                    monthUnjustified,
+                    monthMeasures,
+                    Round(Share(monthMeasures, monthUnjustified)));
+            })
+            .ToList();
+
+        return new DisciplinaryDto(
+            unjustified,
+            applied,
+            cancelled,
+            Round(Share(applied, unjustified)),
+            byMeasure,
+            monthlyComparison);
     }
 
     private static KpisDto BuildKpis(IReadOnlyList<AbsenceRecord> records, int headcount, int workingDays)

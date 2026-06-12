@@ -23,6 +23,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient("GoogleSheets");
 builder.Services.AddScoped<IAbsenceSheetClient, GoogleSheetAbsenceClient>();
+builder.Services.AddScoped<IDisciplinarySheetClient, GoogleSheetDisciplinaryClient>();
 builder.Services.AddScoped<IAbsenteeismAnalyticsService, AbsenteeismAnalyticsService>();
 
 var app = builder.Build();
